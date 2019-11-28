@@ -1,7 +1,7 @@
 @extends('spark::layouts.app')
 
 @section('title')
-AmG &#x2799; {{__('Terms Of Service')}}
+AmG &#x2799; {{__('About')}}
 @endsection
 
 @section('content')
@@ -10,7 +10,7 @@ AmG &#x2799; {{__('Terms Of Service')}}
 
     <div class="mx-3 px-4 pt-4 bg-white border-b border-gray-600">
     
-        <h1>{{__('Terms Of Service')}}</h1>
+        <h1>{{__('About')}} Analyse my Golf</h1>
 
     </div>
     <div class="mx-3 p-4 bg-white shadow-xl">
