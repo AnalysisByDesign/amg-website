@@ -1,0 +1,48 @@
+.general-features {
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    h2 {
+        font-size: 1.4rem;
+        margin-top: 15px;
+    }
+
+    h3 {
+        font-size: 1.3rem;
+        margin-top: 15px;
+    }
+
+    h4 {
+        font-size: 1.2rem;
+        margin-top: 15px;
+    }
+
+    p {
+        line-height: 25px;
+        margin: 0;
+        margin-bottom: 10px;
+    }
+
+    ol {
+        padding-top: 10px;
+        padding-left: 10px;
+        list-style: decimal;
+    }
+
+    ol > li {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    ol > li > ul {
+        padding-top: 5px;
+        padding-left: 20px;
+        list-style: disc;
+    }
+
+    ol > li > ul > li {
+        padding-top: 5px;
+    }
+
+}

@@ -1,0 +1,50 @@
+/***********************************************************************/
+/*                       Main NavBar Definition                        */
+/***********************************************************************/
+.navbar {
+  font-family: $headings-font-family;
+  margin-top: $amg-menu-margin-top;
+  min-height: $amg-menu-height;
+  max-height: $amg-menu-height;
+  border: none;
+  background: url('/img/banner_image.png') center center no-repeat;
+}
+
+.navbar > .navbar-brand { 
+  margin-top: 5px; 
+  margin-bottom: 5px; 
+}
+
+.navbar-collapse { 
+  padding-top: 40px; 
+}
+
+.navbar-collapse .navbar-nav > li > a,
+.navbar-collapse .navbar-nav > li > a:hover,
+.navbar-collapse .navbar-nav > li > a:focus {
+	background-color: $amgGreen;
+	line-height: $amg-menu-line-height;
+	height: 40px;
+}
+
+.navbar-collapse .navbar-nav > li:first-child > a { 
+  border-top-left-radius: 10px;
+}
+
+.navbar-collapse .navbar-nav > li:last-child > a { 
+  border-top-right-radius: 10px;
+}
+
+.navbar-collapse .navbar-nav > li > .nav-link {
+	color: white;
+}
+
+.spark-nav-profile-photo {
+	background-color: $amgGreen;
+  z-index: 2000;
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+}
+
+/***********************************************************************/
