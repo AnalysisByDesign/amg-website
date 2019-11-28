@@ -1,0 +1,13 @@
+/* TEAM */
+	Owner   : Dave Rix
+	Twitter : @hasgaroth
+	From    : Birmingham
+
+/* THANKS */
+		
+
+/* SITE */
+	Last update : 2017-10-12
+	Language    : English
+	Doctype     : HTML5
+	IDE         : VS Code, CodeKit, Laravel

@@ -1,0 +1,4 @@
+Contact: security@analysemy.golf
+Encryption: 
+Acknowledgements: https://analysemy.golf/hall-of-fame
+Disclosure: Partial
