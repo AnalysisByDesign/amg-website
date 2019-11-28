@@ -1,0 +1,85 @@
+version: '2'
+services:
+
+  # --------------------------------------------------------------
+  # The Application
+  app:
+    build:
+      context: ./
+      dockerfile: configs/app.dockerfile
+    container_name: amg-app
+    working_dir: /var/www
+    volumes:
+      - ../:/var/www
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=database"
+    depends_on:
+      - database
+
+  # --------------------------------------------------------------
+  # The Web Server
+  web:
+    build:
+      context: ./
+      dockerfile: configs/web.dockerfile
+    container_name: amg-web
+    working_dir: /var/www
+    volumes_from:
+      - app
+    ports:
+      - 8080:80
+    depends_on:
+      - app
+
+  # --------------------------------------------------------------
+  # The Database
+  database:
+    image: mysql:5.7
+    container_name: amg-db
+    volumes:
+      - ./dbdata:/var/lib/mysql
+    environment:
+      - "MYSQL_DATABASE=amg_master"
+      - "MYSQL_USER=homestead"
+      - "MYSQL_PASSWORD=secret"
+      - "MYSQL_ROOT_PASSWORD=secret"
+    ports:
+        - "33060:3306"
+
+  # --------------------------------------------------------------
+  # PHPMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: myadmin
+    environment:
+      - "MYSQL_DATABASE=amg_master"
+      - "MYSQL_USER=homestead"
+      - "MYSQL_PASSWORD=secret"
+      - "MYSQL_ROOT_PASSWORD=secret"
+    links:
+      - database:db
+    ports:
+      - 8095:80
+
+  # --------------------------------------------------------------
+  # Percona PMM
+  pmm:
+    image: percona/pmm-server:latest
+    container_name: pmm
+    environment:
+      - "SERVER_USER=admin"
+      - "SERVER_PASSWORD=admin"
+      - "ORCHESTRATOR_ENABLED=true"
+      - "ORCHESTRATOR_USER=admin"
+      - "ORCHESTRATOR_PASSWORD=admin"
+    volumes:
+      - "./pmmdata/prometheus:/opt/prometheus/data"
+      - "./pmmdata/consul:/opt/consul-data"
+      - "./pmmdata/mysql:/var/lib/mysql"
+      - "./pmmdata/grafana:/var/lib/grafana"
+    ports:
+      - 8096:80
+
+
+

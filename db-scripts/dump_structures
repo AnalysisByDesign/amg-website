@@ -1,0 +1,176 @@
+#!/bin/bash
+# --------------------------------------------------------------------------------
+# Script name  : dump_structures
+# Author       : Dave Rix (dave@analysemy.golf)
+# Created      : 2015-12-01
+# Description  : This is a dump_structures console script to be used as a basis for new
+#              : shell scripts for useful tools and utilities to be run purely
+#              : from the console - this does not have email out capabilities
+#              : In addition, we will also backup other items such as crontab settings
+# History      :
+#  2015-12-01  : DAR - Initial script
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# Variable Declaration and includes
+# --------------------------------------------------------------------------------
+# Include bash function library first
+basePath=`git rev-parse --show-toplevel`
+funcPath="${basePath}/funcs"
+. ${funcPath}/funcs_bash
+
+scriptDesc="AmG dump_structures"
+email="dave@analysemy.golf"
+
+# --------------------------------------------------------------------------------
+# Set some defaults
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# Local functions
+# --------------------------------------------------------------------------------
+function AmG_RemoveTemp() {
+	# Remove temp files if there are any
+	doNothing=Y
+}
+
+function Script_Usage() {
+
+	cat << EOF
+
+usage: $0 OPTIONS server
+
+OPTIONS can be:
+        -h                Show this message
+        -v                Verbose output
+
+EOF
+
+	# If we have called the usage statement, then something has gone wrong
+	# so we can remove the lock file ready for the next run!
+	AmG_Cleanup 1
+}
+
+# Now set up a trap to catch any errors and cause the exit early function to be
+# called we will trap the following codes HUP, INT, QUIT, KILL
+trap AmG_Exit_Early 1 2 3 9
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# Check which options have been passed in
+# --------------------------------------------------------------------------------
+while getopts ":hv" OPTION
+do
+	case $OPTION in
+		h)
+			Script_Usage
+			;;
+		v)
+			verbose="Y"
+			;;
+		?)
+			Script_Usage
+			;;
+	esac
+done
+shift $((OPTIND - 1))
+
+# Now check the server list that has been passed in...
+loginPath=$1
+server=`mysql_config_editor print --login-path=${loginPath} | grep host | awk '{print $3}'`
+if [ "" = "${server}" ]
+then
+	AmG_Message "You have not supplied a MySQL loginPath"
+	AmG_Message "Valid options are;"
+	mysql_config_editor print --all | grep -E "^\[" | sed "s/\[/    /g" | sed "s/\]//g" | sort -u
+	AmG_Cleanup 1
+fi
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# We are ready to start, so check and set the lock file
+# --------------------------------------------------------------------------------
+AmG_Message "Starting ${scriptName} for server ${server}..."
+AmG_ObtainLock
+AmG_Verbose "Verbose logging  = ${verbose}"
+# --------------------------------------------------------------------------------
+
+# Ensure the folder is there, and that it is EMPTY
+# We do this to ensure that we get a true representation of
+# the system including those database which have been removed
+outPath="/data/mysql/conf/db_structure"
+mkdir -p ${outPath} 2>/dev/null
+rm -f ${outPath}/*
+
+# --------------------------------------------------------------------------------
+# First, we extract all the database structures
+AmG_Message "Dumping database structures"
+opts="--opt --add-drop-trigger --allow-keywords --comments --compress 
+	--hex-blob --no-create-db --quote-names --single-transaction
+	--dump-date --events --routines --triggers --no-data"
+# --opt enables --add-drop-table, --add-locks, --create-options,
+#				--quick, --extended-insert, --lock-tables, --set-charset,
+# 				--disable-keys
+allDBs=`mysql --login-path=${loginPath} -Ne "SHOW DATABASES;" | \
+		grep -vE "^(mysql|.*_schema)$"`
+
+for db in ${allDBs}
+do
+	AmG_Verbose "   ${db}"
+	mysqldump --login-path=${loginPath} ${opts} ${db} > ${outPath}/${db}.sql
+	strSQL="select * from columns where table_schema = '${db}';"
+	mysql --login-path=${loginPath} -e "${strSQL}" "information_schema" > ${outPath}/${db}.cols.txt
+done
+
+# --------------------------------------------------------------------------------
+# Now for all the users that are configured on the system
+AmG_Message "Dumping user permissions"
+strSQL="SELECT concat_ws(',', user, host) FROM mysql.user ORDER BY user, host;"
+users=`mysql --login-path=${loginPath} -Ne "${strSQL}"`
+rm ${outPath}/user_grants.sql 2>/dev/null
+for user in ${users}
+do
+	AmG_Verbose "   ${user}"
+	name=`echo ${user} | cut -d, -f1`
+	host=`echo ${user} | cut -d, -f2`
+	strSQL="SHOW GRANTS FOR '${name}'@'${host}';"
+	mysql --login-path=${loginPath} -Ne "${strSQL}" | sed "s/$/;/g" >> ${outPath}/user_grants.sql
+done	
+
+# --------------------------------------------------------------------------------
+# Next for the configuration of the system...
+AmG_Message "Dumping system vars and stats"
+mysql --login-path=${loginPath} -Ne "SHOW GLOBAL VARIABLES;" > ${outPath}/global_vars.sql
+mysql --login-path=${loginPath} -Ne "SHOW GLOBAL STATUS;" > ${outPath}/global_status.sql
+
+# --------------------------------------------------------------------------------
+# Next for the current crontab settings
+AmG_Message "Dumping crontab settings"
+users=`ls -1 /var/spool/cron/crontabs/ 2>/dev/null`
+for user in ${users}
+do
+	crontab -lu ${user} > ${outPath}/crontab.${user}
+done
+
+# --------------------------------------------------------------------------------
+# Logging, analysis, email, etc.
+# --------------------------------------------------------------------------------
+
+# Initiate a commit and a push to the remote repo store
+# This allows us to recover database structures if things are going wrong
+AmG_Message "Committing changes to Git repo if applicable"
+cd ${outPath}
+if [ -d .git ]; then
+	git add .
+	git commit -m "Automated commit - ${theDTS}"
+	git push
+fi
+
+# --------------------------------------------------------------------------------
+# All done, so tidy stuff up a bit before exiting...
+AmG_Cleanup
+# --------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
+#      SCRIPT END
+# --------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------

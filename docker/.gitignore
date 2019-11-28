@@ -1,0 +1,3 @@
+# Ignore the data folders for the docker containers
+dbdata
+pmmdata

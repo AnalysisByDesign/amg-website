@@ -1,0 +1,105 @@
+#!/bin/bash
+################################################################################
+# Set up any functions that might be required in our scripts
+################################################################################
+
+################################################################################
+# AmG_GetQueryResult - returns the results of a database query
+# Parameters are as follows;
+#	1. Target Server
+#	2. Username
+#	3. Password
+#	4. Target Database
+#	5. SQL statement to execute
+function AmG_GetQueryResult() {
+	# Check we have enough to be getting along with...
+	if [ -z "$5" ]
+	then
+		AmG_Message "** Not all the required information supplied to $FUNCNAME **"
+		echo ""; return
+	fi
+	# OK, run the query, returning all the required information...
+	mysql -h "${1}" -u "${2}" -p"${3}" --skip-column-names -e "${5}" "${4}"
+}
+
+
+###########################################################
+## waitForSlave
+##
+## This script does exactly what it says, waits for the
+## slave to catch up with the master before continuing..
+function waitForSlave {
+	wfSlave=$1; wfUser=$2; wfPwd=$3
+
+	slaveStatus=`AmG_GetQueryResult ${wfSlave} ${wfUser} ${wfPwd} "mysql" "SHOW SLAVE STATUS\G" | grep "Seconds" | awk '{print $2}'`
+	while [ "${slaveStatus}" != "0" ]
+	do
+		# Sleep for 5 seconds then try again
+		echo -ne "Waiting for slave... (${slaveStatus})                                                 \r"
+		sleep 1.5
+		slaveStatus=`mysql -h "${wfSlave}" -u "${wfUser}" -p"${wfPwd}" -t -e "SHOW SLAVE STATUS\G" "mysql" | grep "Seconds" | awk '{print $2}'`
+	done
+}
+
+
+###########################################################
+# function loopExecuteSQL ( $strSQL, $lowID, $maxID, $step )
+# This function runs the supplied SQL statement against the db
+# a number of times depending on the low, high and step values
+function loopExecuteSQL {
+	  host=$1;  user=$2;   pwd=$3;   db=$4
+	orgSQL=$5; minID=$6; maxID=$7; step=$8
+
+	if [ "${step}" = "" ]
+	then
+		AmG_Message "Not enough information supplied to $FUNCNAME function."
+		exit 1
+	fi
+
+	# Work out what range of data we need to work with
+	lowID=${minID}
+	highID=$((minID + loopStep))
+	# And sanity check, just in case we have only a handful of records
+	[ ${highID} -gt ${maxID} ] && highID=${maxID}
+	
+	# Another bit of sanity checking...
+	# We don't really want to continue with the rest of this function
+	# if the minID is larger than the maxID, so return out.
+	[ ${minID} -gt ${maxID} ] && return
+	
+	AmG_Verbose "    working with ID's between ${minID} and ${maxID}"
+	
+	numLoops=0
+	while [ $highID -le $maxID ]
+	do
+	
+		if [ "Y" = "${verbose}" -o "Y" = "${v_verbose}" ]
+		then
+			echo -ne "    running command where id between ${lowID} and ${highID} of ${maxID}\r"
+		fi
+
+		strSQL=`echo $orgSQL | awk 'BEGIN {
+									lowID=ARGV[1]; ARGV[1]=""
+									highID=ARGV[2]; ARGV[2]=""
+									} {
+										gsub(/###LOWID###/, lowID, $0)
+										gsub(/###HIGHID###/, highID, $0)
+										print $0
+									}' ${lowID} ${highID}`
+	
+		AmG_GetQueryResult ${host} ${user} ${pwd} ${db} "${strSQL}"
+	
+		## ------------------------------------------------------------------------------------------
+		# Move on to the next loop step...
+		numLoops=$((numLoops + 1))
+		lowID=${highID}
+		highID=$((lowID + loopStep))
+	
+	done
+
+	if [ "Y" = "${verbose}" -o "Y" = "${v_verbose}" ]
+	then
+		echo ""
+	fi
+
+}

@@ -1,0 +1,160 @@
+#!/bin/bash
+################################################################################
+# Set up any functions that might be required in our scripts
+################################################################################
+
+scriptName=`basename $0 2>/dev/null`
+[ "" = "${scriptName}" ] && scriptName=$$
+[ "" = "${verbose}" ] && verbose="N"
+
+# Prepare the paths we are going to use
+basePath=`git rev-parse --show-toplevel`
+funcPath="${basePath}/funcs"
+
+dataPath="/data"
+tmpPath="${dataPath}/tmp"
+logPath="${dataPath}/logs"
+mkdir -p ${logPath} ${tmpPath}
+
+# Some generic variables for use later
+   userIP=`echo ${SSH_CLIENT} | awk '{print $1}'`
+  theDate=`date +"%Y%m%d"`
+  theTime=`date +"%H%M%S"`
+ dateTime=`date +"%Y-%m-%d,%H:%M:%S"`
+   theDTS=${theDate}-${theTime}
+   dryRun="N"
+
+# Include our AWS functions
+. ${funcPath}/funcs_aws
+
+# Prepare some filenames
+[ "" = "${logFile}" ] && logFile="${logPath}/${scriptName}.log"
+[ "" = "${lockFile}" ] && lockFile="${tmpPath}/${scriptName}.lock"
+
+################################################################################
+# Where are we going to log stuff?
+if [ ! -t 1 ]; then
+	# Close STDOUT & STDERR FD
+	exec 1<&-;			exec 2<&-
+	# Redirect STDOUT & STDERR to logFile
+	exec 1>>${logFile};	exec 2>>${logFile}
+fi
+
+################################################################################
+# AmG_ObtainLock - Obtains a lock file based on the calling program name...
+function AmG_ObtainLock () {
+	AmG_Verbose "Locking with ${lockFile}"
+
+	# Create the lockfile
+	lockfile-create --use-pid --lock-name ${lockFile} #2>/dev/null
+	ret=$?
+
+	if [ ${ret} -ne 0 ]; then
+		AmG_Message "Obtaining lockfile ${lockFile} failed... - already running?"
+		exit ${ret}
+	fi
+
+	# Constantly touch the lockfile
+	lockfile-touch --lock-name ${lockFile} & #2>/dev/null
+	lockStatus=$!
+}
+
+
+################################################################################
+# AmG_RemoveLock - Obtains a lock file based on the calling program name...
+function AmG_RemoveLock () {
+	AmG_Verbose "Removing lock ${lockFile}"
+
+	kill "${lockStatus}" > /dev/null 2>&1
+	lockfile-remove --lock-name ${lockFile} > /dev/null 2>&1
+}
+
+
+################################################################################
+# The exit_script function will be used to catch unwanted exits of the script
+# and to perform any cleanups or email output
+function AmG_Exit_Early() {
+	AmG_Message "Exiting ${scriptDesc} due to early termination..."
+	AmG_Cleanup 1
+}
+
+
+################################################################################
+# This is the cleanup function, do remove temp files and others
+function AmG_Cleanup() {
+	ret=$1
+	AmG_Verbose "Running cleanup function for ${scriptDesc}"
+	endTime=`microtime`
+	AmG_RemoveTemp
+	duration=`AmG_GetDuration $startTime $endTime`
+	AmG_Verbose "Exiting ${scriptDesc} - duration ${duration} seconds."
+	AmG_RemoveLock
+	exit $ret
+}
+
+
+################################################################################
+# AmG_Syslog - Writes a message to the syslog...
+function AmG_Syslog () {
+	msgType=$2
+	[ "${msgType}" = "" ] && msgType="bash/${scriptName}"
+	logger -p "user.notice" -t "${msgType}" "$1"
+}
+
+
+################################################################################
+# AmG_Message - Displays the input parameter with a date/time stamp prefix
+function AmG_Message () {
+	thedate=`date +"%d-%b-%Y,%H:%M:%S"`
+	# This is a normal message statement - always show
+	echo "${thedate},$1"
+	# And write out to syslog if we need to
+	AmG_Syslog "$1" "$2"
+}
+
+
+################################################################################
+# AmG_Verbose - Displays the input parameter with a date/time stamp prefix
+#				if the relevant variable is set
+function AmG_Verbose () {
+	if [ "Y" = "${verbose}" -o "Y" = "${v_verbose}" ]; then
+		# This is a 'verbose' debug statement
+		msgType=$2
+		[ "${msgType}" = "" ] && msgType="bash/${scriptName}/verbose"
+		AmG_Message "$1" ${msgType}
+	fi
+}
+
+
+################################################################################
+# AmG_V_Verbose - Displays the input parameter with a date/time stamp prefix
+#				if the relevant variable is set
+function AmG_V_Verbose () {
+	if [ "Y" = "${v_verbose}" ]; then
+		# This is a 'very verbose' debug statement
+		# Print only if v_verbose is set
+		msgType=$2
+		[ "${msgType}" = "" ] && msgType="bash/${scriptName}/v_verbose"
+		AmG_Message $1 ${msgType}
+	fi
+}
+
+
+################################################################################
+# microtime - returns a time-stamp for monitoring purposes
+function microtime() {
+	date +"%s"
+}
+startTime=`microtime`
+
+
+################################################################################
+# AmG_GetDuration - returns the interval between two passed in times
+function AmG_GetDuration() {
+	startTime=$1; endTime=$2
+	[ "" = "${startTime}" ] && startTime=`microtime`
+	[ "" = "${endTime}" ] && endTime=`microtime`
+	echo $((endTime - startTime))
+}
+
+

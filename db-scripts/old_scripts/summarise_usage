@@ -1,0 +1,174 @@
+#!/bin/bash
+# --------------------------------------------------------------------------------
+# Script name  : summarise_usage
+# Author       : Dave Rix (dave@analysemy.golf)
+# Created      : 2015-12-03
+# Description  : This is a summarise_usage console script to be used as a basis for new
+#              : shell scripts for useful tools and utilities to be run purely
+#              : from the console - this does not have email out capabilities
+# History      :
+#  2015-12-03  : DAR - Initial script
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# Variable Declaration and includes
+# --------------------------------------------------------------------------------
+# Include bash function library first
+basePath=`git rev-parse --show-toplevel`
+funcPath="${basePath}/funcs"
+. ${funcPath}/funcs_bash
+
+scriptDesc="summarise_usage script"
+email="dave@analysemy.golf"
+
+# --------------------------------------------------------------------------------
+# Set some defaults
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# Local functions
+# --------------------------------------------------------------------------------
+function AmG_RemoveTemp() {
+	# Remove temp files if there are any
+	doNothing=Y
+}
+
+function Script_Usage() {
+
+	cat << EOF
+
+usage: $0 OPTIONS server
+
+OPTIONS can be:
+        -h                Show this message
+        -v                Verbose output
+
+EOF
+
+	# If we have called the usage statement, then something has gone wrong
+	# so we can remove the lock file ready for the next run!
+	AmG_Cleanup 1
+}
+
+# Now set up a trap to catch any errors and cause the exit early function to be
+# called we will trap the following codes HUP, INT, QUIT, KILL
+trap AmG_Exit_Early 1 2 3 9
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# Check which options have been passed in
+# --------------------------------------------------------------------------------
+while getopts ":hv" OPTION
+do
+	case $OPTION in
+		h)
+			Script_Usage
+			;;
+		v)
+			verbose="Y"
+			;;
+		?)
+			Script_Usage
+			;;
+	esac
+done
+shift $((OPTIND - 1))
+
+# Now check the server list that has been passed in...
+loginPath=$1
+server=`mysql_config_editor print --login-path=${loginPath} | grep host | awk '{print $3}'`
+if [ "" = "${server}" ]
+then
+	AmG_Message "You have not supplied a MySQL loginPath"
+	AmG_Message "Valid options are;"
+	mysql_config_editor print --all | grep -E "^\[" | sed "s/\[/    /g" | sed "s/\]//g" | sort -u
+	AmG_Cleanup 1
+fi
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# We are ready to start, so check and set the lock file
+# --------------------------------------------------------------------------------
+AmG_Message "Starting ${scriptName} for server ${server}..."
+AmG_ObtainLock
+AmG_Verbose "Verbose logging  = ${verbose}"
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# Summarise the database usage logs - remember these are only _logged_ queies, not all
+AmG_Message "Summarising log content"
+# Database logs
+AmG_Verbose "   database logs"
+strSQL="INSERT INTO aud_dbSummary SELECT * FROM vw_dbPercentiles;"
+mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit"
+
+# Page logs
+AmG_Verbose "   page logs"
+strSQL="INSERT INTO aud_pageSummary SELECT * FROM vw_pagePercentiles;"
+mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit"
+
+# Login logs
+AmG_Verbose "   login logs"
+strSQL="INSERT INTO aud_loginSummary SELECT * FROM vw_loginSummary;"
+mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit"
+
+# --------------------------------------------------------------------------------
+# Next stage is to migrate any old history data into the archive tables
+AmG_Message "Archiving log content"
+# Database logs
+AmG_Verbose "   database logs"
+strSQL="INSERT IGNORE INTO aud_dbArchive 
+		SELECT * FROM aud_database
+		WHERE idDate < (SELECT max(idDate) as maxDate FROM aud_dbSummary)
+		ORDER BY idAudit"
+mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit"
+
+# Page logs
+AmG_Verbose "   page logs"
+strSQL="INSERT IGNORE INTO aud_pageArchive 
+		SELECT * FROM aud_pages
+		WHERE idDate < (SELECT max(idDate) as maxDate FROM aud_pageSummary)
+		ORDER BY idPage"
+mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit"
+
+# Login logs
+AmG_Verbose "   login logs"
+strSQL="INSERT IGNORE INTO aud_loginArchive 
+		SELECT * FROM aud_logins
+		WHERE idDate < (SELECT max(idDate) as maxDate FROM aud_loginSummary)
+		ORDER BY idLogin"
+mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit"
+
+# --------------------------------------------------------------------------------
+# Next stage is to remove the archived from the main tables
+AmG_Message "Cleaning log content"
+# Database logs
+AmG_Verbose "   database logs"
+strSQL="SELECT max(idAudit) FROM aud_dbArchive;"
+maxId=`mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit" | awk '{print $0+0}'`
+strSQL="DELETE FROM aud_database WHERE idAudit <= '${maxId}';"
+mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit"
+
+# Page logs
+AmG_Verbose "   page logs"
+strSQL="SELECT max(idPage) FROM aud_pageArchive;"
+maxId=`mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit" | awk '{print $0+0}'`
+strSQL="DELETE FROM aud_pages WHERE idPage <= '${maxId}';"
+mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit"
+
+# Login logs
+AmG_Verbose "   login logs"
+strSQL="SELECT max(idLogin) FROM aud_loginArchive;"
+maxId=`mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit" | awk '{print $0+0}'`
+strSQL="DELETE FROM aud_logins WHERE idLogin <= '${maxId}';"
+mysql --login-path=${loginPath} -Ne "${strSQL}" "amg_audit"
+
+# --------------------------------------------------------------------------------
+# All done, so tidy stuff up a bit before exiting...
+AmG_Cleanup
+# --------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
+#      SCRIPT END
+# --------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
+

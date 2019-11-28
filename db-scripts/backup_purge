@@ -1,0 +1,126 @@
+#!/bin/bash
+# --------------------------------------------------------------------------------
+# Script name  : backup_purge
+# Author       : Dave Rix (dave@analysemy.golf)
+# Created      : 2015-12-30
+# Description  : This is a script to purge old backups
+# History      :
+#  2015-12-30  : DAR - Initial script
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# Variable Declaration and includes
+# --------------------------------------------------------------------------------
+# Include bash function library first
+basePath=`git rev-parse --show-toplevel`
+funcPath="${basePath}/funcs"
+. ${funcPath}/funcs_bash
+
+scriptDesc="AmG backup_purge"
+email="dave@analysemy.golf"
+
+# --------------------------------------------------------------------------------
+# Set some defaults
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# Local functions
+# --------------------------------------------------------------------------------
+function AmG_RemoveTemp() {
+	# Remove temp files if there are any
+	doNothing=Y
+}
+
+function Script_Usage() {
+
+	cat << EOF
+
+usage: $0 OPTIONS server
+
+OPTIONS can be:
+        -h                Show this message
+        -v                Verbose output
+
+EOF
+
+	# If we have called the usage statement, then something has gone wrong
+	# so we can remove the lock file ready for the next run!
+	AmG_Cleanup 1
+}
+
+# Now set up a trap to catch any errors and cause the exit early function to be
+# called we will trap the following codes HUP, INT, QUIT, KILL
+trap AmG_Exit_Early 1 2 3 9
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# Check which options have been passed in
+# --------------------------------------------------------------------------------
+while getopts ":dhv" OPTION
+do
+	case $OPTION in
+		d)
+			dryRun="Y"
+			;;
+		h)
+			Script_Usage
+			;;
+		v)
+			verbose="Y"
+			;;
+		?)
+			Script_Usage
+			;;
+	esac
+done
+shift $((OPTIND - 1))
+
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
+# We are ready to start, so check and set the lock file
+# --------------------------------------------------------------------------------
+AmG_Message "Starting ${scriptName} for localhost..."
+AmG_ObtainLock
+AmG_Verbose "Verbose logging  = ${verbose}"
+# --------------------------------------------------------------------------------
+
+# Ensure the folder is there
+backupRoot="/data/mysql/backups"
+mkdir -p ${backupRoot} 2>/dev/null
+
+# --------------------------------------------------------------------------------
+# Purge old backups, both compressed and uncompressed
+AmG_Message "Purging old backups (full and incremental)"
+
+# Full backup folders
+fullBackupFolders=`find ${backupRoot} -maxdepth 1 -type d -name "*.full"`
+# Incremental backup folders
+incBackupFolders=`find ${backupRoot} -maxdepth 1 -type d -name "*.inc"`
+
+# Full compressed files except the most recent 2
+fullBackupFiles=`find ${backupRoot} -maxdepth 1 -type f -name "*.full.tar.gz" | \
+					sort -r | tail --lines=+3`
+# Inc compressed files except the most recent 6 (three runs per day)
+incBackupFiles=`find ${backupRoot} -maxdepth 1 -type f -name "*.inc.tar.gz" | \
+					sort -r | tail --lines=+7`
+
+# Now combine all these into a single list of things to remove
+backupFiles="${fullBackupFolders} ${incBackupFolders} ${fullBackupFiles} ${incBackupFiles}"
+
+# And purge all the files / folders we have identified
+for fld in ${backupFiles}
+do
+	AmG_Message "    - removing ${fld}"
+	[ "${dryRun}" != "Y" ] && rm -rf ${fld}
+done
+
+
+# --------------------------------------------------------------------------------
+# All done, so tidy stuff up a bit before exiting...
+AmG_Cleanup
+# --------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
+#      SCRIPT END
+# --------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------

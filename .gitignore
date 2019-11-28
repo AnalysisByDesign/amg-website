@@ -1,0 +1,4 @@
+# Ignore a number of items from the git repo
+
+/secrets
+
