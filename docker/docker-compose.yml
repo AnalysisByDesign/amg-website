@@ -10,7 +10,7 @@ services:
     container_name: amg-app
     working_dir: /var/www
     volumes:
-      - ../:/var/www
+      - ../website:/var/www
     environment:
       - "DB_PORT=3306"
       - "DB_HOST=database"
@@ -38,7 +38,7 @@ services:
     image: mysql:5.7
     container_name: amg-db
     volumes:
-      - ./dbdata:/var/lib/mysql
+      - ../data/dbdata:/var/lib/mysql
     environment:
       - "MYSQL_DATABASE=amg_master"
       - "MYSQL_USER=homestead"
@@ -74,10 +74,10 @@ services:
       - "ORCHESTRATOR_USER=admin"
       - "ORCHESTRATOR_PASSWORD=admin"
     volumes:
-      - "./pmmdata/prometheus:/opt/prometheus/data"
-      - "./pmmdata/consul:/opt/consul-data"
-      - "./pmmdata/mysql:/var/lib/mysql"
-      - "./pmmdata/grafana:/var/lib/grafana"
+      - "../data/pmmdata/prometheus:/opt/prometheus/data"
+      - "../data/pmmdata/consul:/opt/consul-data"
+      - "../data/pmmdata/mysql:/var/lib/mysql"
+      - "../data/pmmdata/grafana:/var/lib/grafana"
     ports:
       - 8096:80
 
