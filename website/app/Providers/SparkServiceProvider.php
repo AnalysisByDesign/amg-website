@@ -42,7 +42,7 @@ class SparkServiceProvider extends ServiceProvider
      *
      * @var bool
      */
-    protected $usesApi = true;
+    protected $usesApi = false;
 
     /**
      * Finish configuring Spark for the application.
@@ -74,7 +74,8 @@ class SparkServiceProvider extends ServiceProvider
                 'Performance trends'
             ]);
 
-        Spark::plan('Premium', 'plan_GGOHuoYHmEpuFV')
+        # Spark::plan('Premium', 'plan_GGOHuoYHmEpuFV')
+        Spark::plan('Premium', 'plan_GGOA94JxiPnYhS')
             ->price(5)
             ->features([
                 'All regular features, plus',
@@ -82,7 +83,8 @@ class SparkServiceProvider extends ServiceProvider
                 'Enhanced analysis'
             ]);
 
-        Spark::plan('Premium', 'plan_GGOHRuR1KHexO0')
+        # Spark::plan('Premium', 'plan_GGOHRuR1KHexO0')
+        Spark::plan('Premium', 'plan_GGOAEOG9LxTuED')
             ->price(50)
             ->yearly()
             ->features([
@@ -93,7 +95,8 @@ class SparkServiceProvider extends ServiceProvider
             ]);
 
 
-        Spark::teamPlan('Group', 'plan_GGOIJq4Gs85AzV')
+        # Spark::teamPlan('Group', 'plan_GGOIJq4Gs85AzV')
+        Spark::teamPlan('Group', 'plan_GGSeki0vwqNYIy')
             ->price(3)
             ->maxTeamMembers(40)
             ->features([
@@ -104,7 +107,8 @@ class SparkServiceProvider extends ServiceProvider
                 'Multi-day events'
             ]);
 
-        Spark::teamPlan('Group', 'plan_GGOJEJqRcCYY0n')
+        # Spark::teamPlan('Group', 'plan_GGOJEJqRcCYY0n')
+        Spark::teamPlan('Group', 'plan_GGSgNFyxLqo3JH')
             ->price(30)
             ->maxTeamMembers(40)
             ->yearly()
@@ -126,5 +130,6 @@ class SparkServiceProvider extends ServiceProvider
     {
         parent::register();
         Spark::prefixTeamsAs('group');
+        Spark::ensureEmailIsVerified();
     }
 }

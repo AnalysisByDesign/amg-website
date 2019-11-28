@@ -4,6 +4,7 @@ namespace App;
 
 use Laravel\Spark\CanJoinTeams;
 use Laravel\Spark\User as SparkUser;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 /**
  * App\User
