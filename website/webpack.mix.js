@@ -1,4 +1,6 @@
-const mix = require('laravel-mix');
+let mix = require('laravel-mix');
+let exec = require('child_process').exec;
+let path = require('path');
 
 /*
  |--------------------------------------------------------------------------
@@ -11,5 +13,27 @@ const mix = require('laravel-mix');
  |
  */
 
-mix.js('resources/js/app.js', 'public/js')
-   .sass('resources/sass/app.scss', 'public/css');
+mix
+    .sass('resources/sass/app.scss', 'public/css')
+    .js('resources/js/app.js', 'public/js')
+    .copy('node_modules/sweetalert2/dist/sweetalert2.min.js', 'public/js/sweetalert.min.js')
+    .sass('resources/sass/app-rtl.scss', 'public/css')
+    .then(() => {
+        exec('node_modules/rtlcss/bin/rtlcss.js public/css/app-rtl.css ./public/css/app-rtl.css');
+    })
+    .webpackConfig({
+        resolve: {
+            modules: [
+                path.resolve(__dirname, 'vendor/laravel/spark-aurelius/resources/assets/js'),
+                'node_modules'
+            ],
+            alias: {
+                'vue$': mix.inProduction() ? 'vue/dist/vue.min' : 'vue/dist/vue.js'
+            }
+        }
+    });
+
+
+if (mix.inProduction()) {
+    mix.version();
+}

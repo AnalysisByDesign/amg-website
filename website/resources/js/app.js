@@ -1,32 +1,23 @@
-/**
- * First we will load all of this project's JavaScript dependencies which
- * includes Vue and other libraries. It is a great starting point when
- * building robust, powerful web applications using Vue and Laravel.
+
+/*
+ |--------------------------------------------------------------------------
+ | Laravel Spark Bootstrap
+ |--------------------------------------------------------------------------
+ |
+ | First, we will load all of the "core" dependencies for Spark which are
+ | libraries such as Vue and jQuery. This also loads the Spark helpers
+ | for things such as HTTP calls, forms, and form validation errors.
+ |
+ | Next, we'll create the root Vue application for Spark. This will start
+ | the entire application and attach it to the DOM. Of course, you may
+ | customize this script as you desire and load your own components.
+ |
  */
 
-require('./bootstrap');
+require('spark-bootstrap');
 
-window.Vue = require('vue');
+require('./components/bootstrap');
 
-/**
- * The following block of code may be used to automatically register your
- * Vue components. It will recursively scan this directory for the Vue
- * components and automatically register them with their "basename".
- *
- * Eg. ./components/ExampleComponent.vue -> <example-component></example-component>
- */
-
-// const files = require.context('./', true, /\.vue$/i)
-// files.keys().map(key => Vue.component(key.split('/').pop().split('.')[0], files(key).default))
-
-Vue.component('example-component', require('./components/ExampleComponent.vue').default);
-
-/**
- * Next, we will create a fresh Vue application instance and attach it to
- * the page. Then, you may begin adding components to this application
- * or customize the JavaScript scaffolding to fit your unique needs.
- */
-
-const app = new Vue({
-    el: '#app',
+var app = new Vue({
+    mixins: [require('spark')]
 });
