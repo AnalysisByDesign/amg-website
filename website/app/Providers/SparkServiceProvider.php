@@ -13,11 +13,11 @@ class SparkServiceProvider extends ServiceProvider
      * @var array
      */
     protected $details = [
-        'vendor' => 'Your Company',
-        'product' => 'Your Product',
-        'street' => 'PO Box 111',
-        'location' => 'Your Town, NY 12345',
-        'phone' => '555-555-5555',
+        'vendor' => 'Analysis by Design Ltd',
+        'product' => 'Analyse my Golf',
+        'street' => 'Pear Tree Barn, Long Hyde Road',
+        'location' => 'South Littleton, Worcs, UK, WR11 8TH',
+        'phone' => '',
     ];
 
     /**
@@ -25,7 +25,7 @@ class SparkServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    protected $sendSupportEmailsTo = null;
+    protected $sendSupportEmailsTo = "support@analysemy.golf";
 
     /**
      * All of the application developer e-mail addresses.
@@ -33,7 +33,8 @@ class SparkServiceProvider extends ServiceProvider
      * @var array
      */
     protected $developers = [
-        //
+        "dave@analysisbydesign.co.uk",
+        'dave@analysemy.golf'
     ];
 
     /**
@@ -72,5 +73,6 @@ class SparkServiceProvider extends ServiceProvider
     public function register()
     {
         parent::register();
+        Spark::prefixTeamsAs('group');
     }
 }
