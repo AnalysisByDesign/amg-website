@@ -51,17 +51,69 @@ class SparkServiceProvider extends ServiceProvider
      */
     public function booted()
     {
-        Spark::noCardUpFront()->teamTrialDays(10);
+        Spark::chargeTeamsPerMember();
+        Spark::identifyTeamsByPath();
+        Spark::collectEuropeanVat('GB');
 
-        Spark::freeTeamPlan()
+        Spark::noCardUpFront()->trialDays(30);
+        Spark::noCardUpFront()->teamTrialDays(30);
+
+        Spark::freePlan('Trial')
             ->features([
-                'First', 'Second', 'Third'
+                'Up to 3 rounds per month',
+                'Handicap calculations',
+                'Round analysis',
+                'Performance trends'
             ]);
 
-        Spark::teamPlan('Basic', 'provider-id-1')
-            ->price(10)
+        Spark::freeTeamPlan('Group Trial')
             ->features([
-                'First', 'Second', 'Third'
+                'Up to 4 group events',
+                'Handicap calculations',
+                'Round analysis',
+                'Performance trends'
+            ]);
+
+        Spark::plan('Premium', 'plan_GGOHuoYHmEpuFV')
+            ->price(5)
+            ->features([
+                'All regular features, plus',
+                'Unlimited golf rounds',
+                'Enhanced analysis'
+            ]);
+
+        Spark::plan('Premium', 'plan_GGOHRuR1KHexO0')
+            ->price(50)
+            ->yearly()
+            ->features([
+                'All regular features, plus',
+                'Unlimited golf rounds',
+                'Enhanced analysis',
+                '2 months free'
+            ]);
+
+
+        Spark::teamPlan('Group', 'plan_GGOIJq4Gs85AzV')
+            ->price(3)
+            ->maxTeamMembers(40)
+            ->features([
+                'Group events',
+                'Event scoring',
+                'Handicap adustments',
+                'Suggested teams',
+                'Multi-day events'
+            ]);
+
+        Spark::teamPlan('Group', 'plan_GGOJEJqRcCYY0n')
+            ->price(30)
+            ->maxTeamMembers(40)
+            ->yearly()
+            ->features([
+                'Group events',
+                'Event scoring',
+                'Handicap adustments',
+                'Suggested teams',
+                'Multi-day events'
             ]);
     }
 

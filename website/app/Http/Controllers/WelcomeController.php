@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Parsedown;
+use Laravel\Spark\Spark;
 
 class WelcomeController extends Controller
 {
@@ -13,6 +14,12 @@ class WelcomeController extends Controller
      */
     public function show()
     {
-        return view('welcome');
+        $welcomeFile = file_exists(resource_path('content/welcome.' . app()->getLocale() . '.md'))
+            ? resource_path('content/welcome.' . app()->getLocale() . '.md')
+            : resource_path('content/welcome.md');
+
+        return view('spark::welcome', [
+            'content' => (new Parsedown)->text(file_get_contents($welcomeFile))
+        ]);
     }
 }
