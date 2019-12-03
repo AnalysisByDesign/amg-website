@@ -35,10 +35,3 @@ Route::group(array('prefix' => 'submit'), function () {
   Route::get('/', 'SubmitController@show');
   Route::get('/{any}', 'SubmitController@show')->where('any', '.*');
 });
-
-// Item specific pages
-Route::get('/users/{id}', 'UserController@show');
-Route::get('/venues/{id}', 'VenueController@show');
-Route::get('/courses/{id}', 'CourseController@show');
-
-// Route::get('/{team_slug}/projects', 'ProjectController@index');

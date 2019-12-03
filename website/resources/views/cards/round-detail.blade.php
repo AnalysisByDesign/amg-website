@@ -1,5 +1,4 @@
-<a href="home?highlight_round={{ $highlight_round->round_id }}"
-	class="round-detail-card">
+<a href="home?highlight_round={{ $highlight_round->round_id }}">
 
 <div class="{{ ( $highlight_round->round_id != "" 
 									? $highlight_round->round_id == $highlight_round->round_id 
