@@ -1,5 +1,3 @@
-<a href="home?highlight_round={{ $round->round_id }}">
-
 <div class="{{ ( $highlight_round_id != "" 
 									? $highlight_round_id == $round->round_id 
 									: $loop->first ) 
@@ -15,13 +13,16 @@
 			class="rounded-full float-left h-16 w-16 flex items-center justify-center m-1 mr-2">
 
 			<div class="float-right">
+				<a href="home?highlight_round={{ $round->round_id }}">
 					{{ $round->theTime->format('d M \'y') }}
+				</a>
 			</div>
 
-	{{ $round->user_name }}
+	<a href="/users/{{ $round->user_id }}">{{ $round->user_name }}</a>
 			
 	<div class="text-base">
-		{{ $round->course_name }}, {{ $round->venue_name }}.
+		<a href="/courses/{{ $round->course_id }}">{{ $round->course_name }}</a>, 
+			<a href="/venues/{{ $round->venue_id }}">{{ $round->venue_name }}</a>.
 	</div>
 
 @if($round->type == "round")

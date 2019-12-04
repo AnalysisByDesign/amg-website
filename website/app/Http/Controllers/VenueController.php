@@ -35,7 +35,13 @@ class VenueController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $request->only(['name', 'postcode', 'location']);
+        try {
+            $venue = Venue::createNewVenue($data);
+            return response()->json(['success' => true, 'venue' => $venue]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -44,9 +50,20 @@ class VenueController extends Controller
      * @param  \App\Venue  $venue
      * @return \Illuminate\Http\Response
      */
-    public function show(Venue $venue)
+    public function show(Venue $venue, $id)
     {
-        //
+        // Get the venue profile information
+        $venue = Venue::where('id', $id)
+            ->first();
+
+        // // Get the list of timeline events for this venue
+        // $posts = VwTimelines::orderBy('theTime', 'desc')
+        // ->where('venue_id', $id)
+        // ->limit(20)
+        // ->get();
+
+        // return view('venues.profile', ['venue' => $venue, 'posts' => $posts]);
+        return view('venues.profile', ['venue' => $venue]);
     }
 
     /**
@@ -81,5 +98,39 @@ class VenueController extends Controller
     public function destroy(Venue $venue)
     {
         //
+    }
+
+    /**
+     * Search  venues
+     *
+     * @param  Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function search(Request $request)
+    {
+        $query = $request->get('query');
+        return response()->json(Venue::searchByName($query));
+    }
+
+    /**
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getCountCourses(Venue $venue, $id)
+    {
+        $venue = Venue::findOrFail($id);
+        $count = $venue->getCountCourses();
+        return response()->json(['count' => $count]);
+    }
+
+    /**
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getById(Venue $venue, $id)
+    {
+        $venue = Venue::findOrFail($id);
+        $venue->with('Course');
+        return response()->json($venue);
     }
 }

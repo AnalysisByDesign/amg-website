@@ -44,10 +44,22 @@ class UserController extends Controller
      * @param  \App\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function show(User $user)
+    public function show(User $user, $id)
     {
-        //
+        // Get the user profile information
+        $user = User::where('id', $id)
+            ->first();
+
+        // // Get the list of timeline events for this user
+        // $posts = VwTimelines::orderBy('theTime', 'desc')
+        //     ->where('user_id', $id)
+        //     ->limit(20)
+        //     ->get();
+
+        // return view('users.profile', ['user' => $user, 'posts' => $posts]);
+        return view('users.profile', ['user' => $user]);
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -81,5 +93,17 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         //
+    }
+
+    /**
+     * Search  players
+     *
+     * @param  Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function search(Request $request)
+    {
+        $query = $request->get('query');
+        return response()->json(User::searchByName($query));
     }
 }
