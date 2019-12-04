@@ -40,3 +40,6 @@ Route::group(array('prefix' => 'submit'), function () {
 Route::get('/users/{id}', 'UserController@show');
 Route::get('/courses/{id}', 'CourseController@show');
 Route::get('/venues/{id}', 'VenueController@show');
+
+// Auth::routes();
+// Route::get('/home', 'HomeController@index')->name('home');
