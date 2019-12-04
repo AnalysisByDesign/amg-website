@@ -54,7 +54,7 @@ class VenueController extends Controller
     {
         // Get the venue profile information
         $venue = Venue::where('id', $id)
-            ->first();
+            ->firstOrFail();
 
         // // Get the list of timeline events for this venue
         // $posts = VwTimelines::orderBy('theTime', 'desc')

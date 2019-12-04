@@ -48,7 +48,7 @@ class UserController extends Controller
     {
         // Get the user profile information
         $user = User::where('id', $id)
-            ->first();
+            ->firstOrFail();
 
         // // Get the list of timeline events for this user
         // $posts = VwTimelines::orderBy('theTime', 'desc')

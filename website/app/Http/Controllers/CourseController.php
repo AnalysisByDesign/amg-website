@@ -55,7 +55,7 @@ class CourseController extends Controller
     {
         // Get the course profile information
         $course = Course::where('id', $id)
-            ->first();
+            ->firstOrFail();
 
         // // Get the list of timeline events for this course
         // $posts = VwTimelines::orderBy('theTime', 'desc')
