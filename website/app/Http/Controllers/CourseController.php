@@ -64,12 +64,8 @@ class CourseController extends Controller
      * @param  \App\Course  $course
      * @return \Illuminate\Http\Response
      */
-    public function show(Course $course, $id)
+    public function show(Course $course)
     {
-        // Get the course profile information
-        $course = Course::where('id', $id)
-            ->firstOrFail();
-
         // // Get the list of timeline events for this course
         // $posts = VwTimelines::orderBy('theTime', 'desc')
         //     ->where('course_id', $id)

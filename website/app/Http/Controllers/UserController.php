@@ -57,12 +57,8 @@ class UserController extends Controller
      * @param  \App\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function show(User $user, $id)
+    public function show(User $user)
     {
-        // Get the user profile information
-        $user = User::where('id', $id)
-            ->firstOrFail();
-
         // // Get the list of timeline events for this user
         // $posts = VwTimelines::orderBy('theTime', 'desc')
         //     ->where('user_id', $id)

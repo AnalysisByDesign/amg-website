@@ -29,9 +29,9 @@ Route::get('/terms', 'GenericController@terms');
 Route::get('/thanks', 'ThanksController@show');
 
 // Show the relevant profile page
-Route::get('/user/{id}', 'UserController@show');
-Route::get('/course/{id}', 'CourseController@show');
-Route::get('/venue/{id}', 'VenueController@show');
+Route::resource('users', 'UserController');
+Route::resource('courses', 'CourseController');
+Route::resource('venues', 'VenueController');
 
 // Submit and search pages
 Route::get('/search', 'SearchController@show');

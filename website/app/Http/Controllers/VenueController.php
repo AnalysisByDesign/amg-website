@@ -63,12 +63,8 @@ class VenueController extends Controller
      * @param  \App\Venue  $venue
      * @return \Illuminate\Http\Response
      */
-    public function show(Venue $venue, $id)
+    public function show(Venue $venue)
     {
-        // Get the venue profile information
-        $venue = Venue::where('id', $id)
-            ->firstOrFail();
-
         // // Get the list of timeline events for this venue
         // $posts = VwTimelines::orderBy('theTime', 'desc')
         // ->where('venue_id', $id)
