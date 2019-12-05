@@ -28,18 +28,17 @@ Route::get('/status', 'GenericController@status');
 Route::get('/terms', 'GenericController@terms');
 Route::get('/thanks', 'ThanksController@show');
 
+// Show the relevant profile page
+Route::get('/user/{id}', 'UserController@show');
+Route::get('/course/{id}', 'CourseController@show');
+Route::get('/venue/{id}', 'VenueController@show');
+
 // Submit and search pages
 Route::get('/search', 'SearchController@show');
 
-Route::group(array('prefix' => 'submit'), function () {
+Route::group([
+  'prefix' => 'submit'
+], function () {
   Route::get('/', 'SubmitController@show');
   Route::get('/{any}', 'SubmitController@show')->where('any', '.*');
 });
-
-// Item specific pages
-Route::get('/users/{id}', 'UserController@show');
-Route::get('/courses/{id}', 'CourseController@show');
-Route::get('/venues/{id}', 'VenueController@show');
-
-// Auth::routes();
-// Route::get('/home', 'HomeController@index')->name('home');

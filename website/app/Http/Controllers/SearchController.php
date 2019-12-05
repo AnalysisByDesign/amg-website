@@ -7,23 +7,20 @@ use Illuminate\Http\Request;
 class SearchController extends Controller
 {
     /**
-    * Create a new controller instance.
-    *
-    * @return void
-    */
+     * Create a new controller instance.
+     *
+     * @return void
+     */
     public function __construct()
     {
         $this->middleware('auth');
-        
-        // We do not need a paid subscription to view this page
-        //$this->middleware('subscribed');
     }
-    
+
     /**
-    * Show the search content
-    *
-    * @return Response
-    */
+     * Show the search content
+     *
+     * @return Response
+     */
     public function show()
     {
         return view('search');
