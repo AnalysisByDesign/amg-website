@@ -31,7 +31,7 @@ Route::get('/thanks', 'ThanksController@show');
 // Show the relevant profile page
 Route::resource('users', 'UserController');
 Route::resource('courses', 'CourseController');
-Route::resource('venues', 'VenueController');
+Route::resource('venue', 'VenueController');
 
 // Submit and search pages
 Route::get('/search', 'SearchController@show');
