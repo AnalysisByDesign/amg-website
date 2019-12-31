@@ -3,38 +3,40 @@ services:
 
   # --------------------------------------------------------------
   # The Application
-  app:
+  amg-app:
     build:
       context: ./
       dockerfile: configs/app.dockerfile
+    image: amg-app
     container_name: amg-app
     working_dir: /var/www
     volumes:
       - ../website:/var/www
     environment:
       - "DB_PORT=3306"
-      - "DB_HOST=database"
+      - "DB_HOST=amg-db"
     depends_on:
-      - database
+      - amg-db
 
   # --------------------------------------------------------------
   # The Web Server
-  web:
+  amg-web:
     build:
       context: ./
       dockerfile: configs/web.dockerfile
+    image: amg-web
     container_name: amg-web
     working_dir: /var/www
     volumes_from:
-      - app
+      - amg-app
     ports:
       - 8080:80
     depends_on:
-      - app
+      - amg-app
 
   # --------------------------------------------------------------
   # The Database
-  database:
+  amg-db:
     image: mysql:5.7
     container_name: amg-db
     volumes:
@@ -58,7 +60,7 @@ services:
       - "MYSQL_PASSWORD=secret"
       - "MYSQL_ROOT_PASSWORD=secret"
     links:
-      - database:db
+      - amg-db:db
     ports:
       - 8095:80
 
@@ -80,6 +82,3 @@ services:
       - "../data/pmmdata/grafana:/var/lib/grafana"
     ports:
       - 8096:80
-
-
-
