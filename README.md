@@ -83,7 +83,7 @@ make down    # stop containers
 make logs    # tail all logs
 make shell   # bash into the PHP container
 make mysql   # MySQL CLI
-make fresh   # wipe DB and re-seed from scratch
+make db-reset  # wipe DB and re-seed from scratch (handles views — see Troubleshooting)
 ```
 
 Full command list: `make help`
@@ -113,6 +113,30 @@ make up
 Spark credentials are stored inside the container and lost on rebuild. Re-run:
 ```bash
 make spark-auth
+```
+
+### `migrate:fresh` fails — table or view already exists
+`migrate:fresh` drops tables but not views. This app creates database views, so `make fresh` will fail on a second run. Use `make db-reset` instead — it drops and recreates the entire database before migrating:
+```bash
+make db-reset
+```
+
+### DB connection fails — `[2002] No such file or directory`
+This app uses a read/write split with non-standard env var names. The standard `DB_HOST` / `DB_USERNAME` / `DB_PASSWORD` are **not used**. Make sure your `.env` has:
+```
+DB_WRITER_HOST=amg-db
+DB_WRITER_USERNAME=homestead
+DB_WRITER_PASSWORD=secret
+DB_READER_HOST=amg-db
+DB_READER_USERNAME=homestead
+DB_READER_PASSWORD=secret
+```
+These are already set correctly in `.env.example` — if you copied it before this was fixed, re-copy and re-add your `APP_KEY`.
+
+### `npm run dev` fails — `ERR_OSSL_EVP_UNSUPPORTED`
+Node 18 + webpack 4 OpenSSL incompatibility. Already handled in the Makefile via `NODE_OPTIONS=--openssl-legacy-provider`. If you see this error running npm manually, prefix the command:
+```bash
+NODE_OPTIONS=--openssl-legacy-provider npm run dev
 ```
 
 ---
