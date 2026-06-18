@@ -1,85 +1,77 @@
-version: '2'
 services:
 
   # --------------------------------------------------------------
-  # The Application
-  app:
+  # PHP-FPM Application
+  amg-app:
     build:
       context: ./
       dockerfile: configs/app.dockerfile
+    image: amg-app
     container_name: amg-app
     working_dir: /var/www
     volumes:
-      - ../:/var/www
+      - ../website:/var/www
     environment:
-      - "DB_PORT=3306"
-      - "DB_HOST=database"
+      - DB_PORT=3306
+      - DB_HOST=amg-db
     depends_on:
-      - database
+      amg-db:
+        condition: service_healthy
 
   # --------------------------------------------------------------
-  # The Web Server
-  web:
+  # Nginx Web Server
+  amg-web:
     build:
       context: ./
       dockerfile: configs/web.dockerfile
+    image: amg-web
     container_name: amg-web
     working_dir: /var/www
     volumes_from:
-      - app
+      - amg-app
     ports:
-      - 8080:80
+      - "8080:80"
     depends_on:
-      - app
+      - amg-app
 
   # --------------------------------------------------------------
-  # The Database
-  database:
+  # MySQL 5.7 (matching original schema)
+  # platform: linux/amd64 required — MySQL 5.7 has no ARM64 image (Apple Silicon)
+  amg-db:
     image: mysql:5.7
+    platform: linux/amd64
     container_name: amg-db
     volumes:
-      - ./dbdata:/var/lib/mysql
+      - ../data/dbdata:/var/lib/mysql
     environment:
-      - "MYSQL_DATABASE=amg_master"
-      - "MYSQL_USER=homestead"
-      - "MYSQL_PASSWORD=secret"
-      - "MYSQL_ROOT_PASSWORD=secret"
+      MYSQL_DATABASE: amg_master
+      MYSQL_USER: homestead
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
     ports:
-        - "33060:3306"
+      - "33060:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   # --------------------------------------------------------------
-  # PHPMyAdmin
+  # phpMyAdmin — http://localhost:8095
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
-    container_name: myadmin
+    platform: linux/amd64
+    container_name: amg-phpmyadmin
     environment:
-      - "MYSQL_DATABASE=amg_master"
-      - "MYSQL_USER=homestead"
-      - "MYSQL_PASSWORD=secret"
-      - "MYSQL_ROOT_PASSWORD=secret"
+      PMA_HOST: amg-db
+      MYSQL_ROOT_PASSWORD: secret
     links:
-      - database:db
+      - amg-db:db
     ports:
-      - 8095:80
+      - "8095:80"
+    depends_on:
+      - amg-db
 
-  # --------------------------------------------------------------
-  # Percona PMM
-  pmm:
-    image: percona/pmm-server:latest
-    container_name: pmm
-    environment:
-      - "SERVER_USER=admin"
-      - "SERVER_PASSWORD=admin"
-      - "ORCHESTRATOR_ENABLED=true"
-      - "ORCHESTRATOR_USER=admin"
-      - "ORCHESTRATOR_PASSWORD=admin"
-    volumes:
-      - "./pmmdata/prometheus:/opt/prometheus/data"
-      - "./pmmdata/consul:/opt/consul-data"
-      - "./pmmdata/mysql:/var/lib/mysql"
-      - "./pmmdata/grafana:/var/lib/grafana"
-    ports:
-      - 8096:80
-
-
-
+networks:
+  default:
+    name: amg-network
